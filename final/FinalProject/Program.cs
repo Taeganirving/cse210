@@ -5,14 +5,11 @@ class Program
     static void Main(string[] args)
     {
         ProjectManager manager = new ProjectManager();
-        FileManager fileManager = new FileManager();
-
         bool running = true;
 
         while (running)
         {
             Console.Clear();
-
             Console.WriteLine("=== LifeBuild ===");
             Console.WriteLine("1. Create Project");
             Console.WriteLine("2. View Projects");
@@ -25,55 +22,21 @@ class Program
 
             int choice = GetIntInput("Choose an option: ");
 
-            if (choice == 1)
-            {
-                CreateProject(manager);
-            }
-            else if (choice == 2)
-            {
-                manager.DisplayAllProjects();
-                Pause();
-            }
-            else if (choice == 3)
-            {
-                SelectProjectMenu(manager);
-            }
-            else if (choice == 4)
-            {
-                FilterByCategory(manager);
-            }
-            else if (choice == 5)
-            {
-                DeleteProject(manager);
-            }
-            else if (choice == 6)
-            {
-                fileManager.SaveProjects(manager.GetProjects(), "lifeBuildSave.txt");
-                Console.WriteLine("Projects saved.");
-                Pause();
-            }
-            else if (choice == 7)
-            {
-                fileManager.LoadProjects(manager, "lifeBuildSave.txt");
-                Console.WriteLine("Projects loaded.");
-                Pause();
-            }
-            else if (choice == 8)
-            {
-                running = false;
-            }
-            else
-            {
-                Console.WriteLine("Invalid option.");
-                Pause();
-            }
+            if      (choice == 1) CreateProject(manager);
+            else if (choice == 2) { manager.DisplayAll(); Pause(); }
+            else if (choice == 3) SelectProjectMenu(manager);
+            else if (choice == 4) FilterByCategory(manager);
+            else if (choice == 5) DeleteProject(manager);
+            else if (choice == 6) { manager.Save("lifeBuildSave.txt"); Console.WriteLine("Projects saved."); Pause(); }
+            else if (choice == 7) { manager.Load("lifeBuildSave.txt"); Console.WriteLine("Projects loaded."); Pause(); }
+            else if (choice == 8) running = false;
+            else { Console.WriteLine("Invalid option."); Pause(); }
         }
     }
 
     static void CreateProject(ProjectManager manager)
     {
         Console.Clear();
-
         Console.Write("Project Name: ");
         string name = Console.ReadLine();
 
@@ -90,21 +53,9 @@ class Program
         Console.Write("Priority: ");
         string priority = Console.ReadLine();
 
-        Console.Write("Budget Goal, enter 0 for no budget: ");
-        double budgetGoal = GetDoubleInput("");
+        double budgetGoal = GetDoubleInput("Budget Goal (enter 0 for none): ");
 
-        Project project = new Project(
-            name,
-            description,
-            category,
-            status,
-            priority,
-            budgetGoal
-        );
-
-        manager.AddProject(project);
-
-        Console.WriteLine();
+        manager.AddProject(new Project(name, description, category, status, priority, budgetGoal));
         Console.WriteLine("Project created.");
         Pause();
     }
@@ -112,27 +63,19 @@ class Program
     static void SelectProjectMenu(ProjectManager manager)
     {
         Console.Clear();
-        manager.DisplayAllProjects();
-
+        manager.DisplayAll();
         Console.WriteLine();
 
         int index = GetIntInput("Select project number: ") - 1;
-        Project selectedProject = manager.SelectProject(index);
+        Project project = manager.SelectProject(index);
 
-        if (selectedProject == null)
-        {
-            Console.WriteLine("Invalid project.");
-            Pause();
-            return;
-        }
+        if (project == null) { Console.WriteLine("Invalid project."); Pause(); return; }
 
-        bool inProjectMenu = true;
-
-        while (inProjectMenu)
+        bool inMenu = true;
+        while (inMenu)
         {
             Console.Clear();
-            selectedProject.DisplayProject();
-
+            project.Display();
             Console.WriteLine();
             Console.WriteLine("1. Add Task");
             Console.WriteLine("2. Add Expense");
@@ -140,296 +83,158 @@ class Program
             Console.WriteLine("4. Add Note");
             Console.WriteLine("5. Mark Item Complete");
             Console.WriteLine("6. Mark Item Incomplete");
-            Console.WriteLine("7. Edit Item");
+            Console.WriteLine("7. Edit Item (replaces with new)");
             Console.WriteLine("8. Delete Item");
             Console.WriteLine("9. Edit Project Info");
             Console.WriteLine("10. Back");
 
             int choice = GetIntInput("Choose an option: ");
 
-            if (choice == 1)
-            {
-                AddTask(selectedProject);
-            }
-            else if (choice == 2)
-            {
-                AddExpense(selectedProject);
-            }
-            else if (choice == 3)
-            {
-                AddMilestone(selectedProject);
-            }
-            else if (choice == 4)
-            {
-                AddNote(selectedProject);
-            }
-            else if (choice == 5)
-            {
-                MarkItemComplete(selectedProject);
-            }
-            else if (choice == 6)
-            {
-                MarkItemIncomplete(selectedProject);
-            }
-            else if (choice == 7)
-            {
-                EditItem(selectedProject);
-            }
-            else if (choice == 8)
-            {
-                DeleteItem(selectedProject);
-            }
-            else if (choice == 9)
-            {
-                EditProjectInfo(selectedProject);
-            }
-            else if (choice == 10)
-            {
-                inProjectMenu = false;
-            }
-            else
-            {
-                Console.WriteLine("Invalid option.");
-                Pause();
-            }
+            if      (choice == 1)  AddTask(project);
+            else if (choice == 2)  AddExpense(project);
+            else if (choice == 3)  AddMilestone(project);
+            else if (choice == 4)  AddNote(project);
+            else if (choice == 5)  ToggleItem(project, complete: true);
+            else if (choice == 6)  ToggleItem(project, complete: false);
+            else if (choice == 7)  EditItem(project);
+            else if (choice == 8)  DeleteItem(project);
+            else if (choice == 9)  EditProjectInfo(project);
+            else if (choice == 10) inMenu = false;
+            else { Console.WriteLine("Invalid option."); Pause(); }
         }
     }
 
     static void AddTask(Project project)
     {
         Console.Clear();
+        Console.Write("Task Name: ");        string name = Console.ReadLine();
+        Console.Write("Description: ");     string desc = Console.ReadLine();
+        Console.Write("Priority: ");        string pri  = Console.ReadLine();
+        DateTime due = GetDateInput("Due Date: ");
 
-        Console.Write("Task Name: ");
-        string name = Console.ReadLine();
-
-        Console.Write("Description: ");
-        string description = Console.ReadLine();
-
-        Console.Write("Priority: ");
-        string priority = Console.ReadLine();
-
-        DateTime dueDate = GetDateInput("Due Date: ");
-
-        TaskItem task = new TaskItem(name, description, priority, dueDate);
-        project.AddItem(task);
-
-        Console.WriteLine("Task added.");
-        Pause();
+        project.AddItem(new TaskItem(name, desc, pri, due));
+        Console.WriteLine("Task added."); Pause();
     }
 
     static void AddExpense(Project project)
     {
         Console.Clear();
-
-        Console.Write("Expense Name: ");
-        string name = Console.ReadLine();
-
-        Console.Write("Description: ");
-        string description = Console.ReadLine();
-
-        Console.Write("Priority: ");
-        string priority = Console.ReadLine();
-
+        Console.Write("Expense Name: ");    string name = Console.ReadLine();
+        Console.Write("Description: ");    string desc = Console.ReadLine();
+        Console.Write("Priority: ");       string pri  = Console.ReadLine();
         double amount = GetDoubleInput("Amount: ");
+        Console.Write("Category: ");       string cat  = Console.ReadLine();
 
-        Console.Write("Category: ");
-        string category = Console.ReadLine();
-
-        ExpenseItem expense = new ExpenseItem(
-            name,
-            description,
-            priority,
-            amount,
-            category
-        );
-
-        project.AddItem(expense);
-
-        Console.WriteLine("Expense added.");
-        Pause();
+        project.AddItem(new ExpenseItem(name, desc, pri, amount, cat));
+        Console.WriteLine("Expense added."); Pause();
     }
 
     static void AddMilestone(Project project)
     {
         Console.Clear();
+        Console.Write("Milestone Name: ");  string name = Console.ReadLine();
+        Console.Write("Description: ");    string desc = Console.ReadLine();
+        Console.Write("Priority: ");       string pri  = Console.ReadLine();
+        DateTime target = GetDateInput("Target Date: ");
 
-        Console.Write("Milestone Name: ");
-        string name = Console.ReadLine();
-
-        Console.Write("Description: ");
-        string description = Console.ReadLine();
-
-        Console.Write("Priority: ");
-        string priority = Console.ReadLine();
-
-        DateTime targetDate = GetDateInput("Target Date: ");
-
-        MilestoneItem milestone = new MilestoneItem(
-            name,
-            description,
-            priority,
-            targetDate
-        );
-
-        project.AddItem(milestone);
-
-        Console.WriteLine("Milestone added.");
-        Pause();
+        project.AddItem(new MilestoneItem(name, desc, pri, target));
+        Console.WriteLine("Milestone added."); Pause();
     }
 
     static void AddNote(Project project)
     {
         Console.Clear();
-
-        Console.Write("Note Title: ");
-        string name = Console.ReadLine();
-
-        Console.Write("Note: ");
-        string description = Console.ReadLine();
-
-        Console.Write("Priority: ");
-        string priority = Console.ReadLine();
-
+        Console.Write("Note Title: ");     string name = Console.ReadLine();
+        Console.Write("Note: ");           string desc = Console.ReadLine();
+        Console.Write("Priority: ");      string pri  = Console.ReadLine();
         DateTime date = GetDateInput("Date: ");
 
-        NoteItem note = new NoteItem(
-            name,
-            description,
-            priority,
-            date
-        );
-
-        project.AddItem(note);
-
-        Console.WriteLine("Note added.");
-        Pause();
+        project.AddItem(new NoteItem(name, desc, pri, date));
+        Console.WriteLine("Note added."); Pause();
     }
 
-    static void MarkItemComplete(Project project)
+    static void ToggleItem(Project project, bool complete)
     {
         Console.Clear();
-        project.DisplayProject();
+        project.Display();
 
-        if (project.GetItems().Count == 0)
+        if (project.GetItemCount() == 0)
         {
-            Console.WriteLine("There are no items to mark complete.");
-            Pause();
-            return;
+            Console.WriteLine($"No items to mark {(complete ? "complete" : "incomplete")}.");
+            Pause(); return;
         }
 
-        int index = GetIntInput("Select item number to mark complete: ") - 1;
+        int index = GetIntInput($"Select item number to mark {(complete ? "complete" : "incomplete")}: ") - 1;
+        bool ok = complete ? project.MarkItemComplete(index) : project.MarkItemIncomplete(index);
 
-        if (index >= 0 && index < project.GetItems().Count)
-        {
-            project.GetItems()[index].MarkComplete();
-            Console.WriteLine("Item marked complete.");
-        }
-        else
-        {
-            Console.WriteLine("Invalid item.");
-        }
-
+        Console.WriteLine(ok ? $"Item marked {(complete ? "complete" : "incomplete")}." : "Invalid item.");
         Pause();
     }
 
-    static void MarkItemIncomplete(Project project)
-    {
-        Console.Clear();
-        project.DisplayProject();
-
-        if (project.GetItems().Count == 0)
-        {
-            Console.WriteLine("There are no items to mark incomplete.");
-            Pause();
-            return;
-        }
-
-        int index = GetIntInput("Select item number to mark incomplete: ") - 1;
-
-        if (index >= 0 && index < project.GetItems().Count)
-        {
-            project.GetItems()[index].MarkIncomplete();
-            Console.WriteLine("Item marked incomplete.");
-        }
-        else
-        {
-            Console.WriteLine("Invalid item.");
-        }
-
-        Pause();
-    }
-
+    // EditItem: collects new data and asks Project to replace the item
     static void EditItem(Project project)
     {
         Console.Clear();
-        project.DisplayProject();
+        project.Display();
 
-        if (project.GetItems().Count == 0)
+        if (project.GetItemCount() == 0)
         {
-            Console.WriteLine("There are no items to edit.");
-            Pause();
-            return;
+            Console.WriteLine("No items to edit."); Pause(); return;
         }
 
         int index = GetIntInput("Select item number to edit: ") - 1;
+        string type = project.GetItemType(index);
 
-        if (index < 0 || index >= project.GetItems().Count)
+        if (type == "")
         {
-            Console.WriteLine("Invalid item.");
-            Pause();
-            return;
+            Console.WriteLine("Invalid item."); Pause(); return;
         }
 
-        ProjectItem item = project.GetItems()[index];
+        Console.Write("New Name: ");        string name = Console.ReadLine();
+        Console.Write("New Description: "); string desc = Console.ReadLine();
+        Console.Write("New Priority: ");    string pri  = Console.ReadLine();
 
-        Console.Write("New Name: ");
-        item.SetName(Console.ReadLine());
+        ProjectItem replacement = null;
 
-        Console.Write("New Description: ");
-        item.SetDescription(Console.ReadLine());
-
-        Console.Write("New Priority: ");
-        item.SetPriority(Console.ReadLine());
-
-        if (item is TaskItem task)
+        if (type == "task")
         {
-            task.SetDueDate(GetDateInput("New Due Date: "));
+            DateTime due = GetDateInput("New Due Date: ");
+            replacement = new TaskItem(name, desc, pri, due);
         }
-        else if (item is MilestoneItem milestone)
+        else if (type == "milestone")
         {
-            milestone.SetTargetDate(GetDateInput("New Target Date: "));
+            DateTime target = GetDateInput("New Target Date: ");
+            replacement = new MilestoneItem(name, desc, pri, target);
         }
-        else if (item is ExpenseItem expense)
+        else if (type == "expense")
         {
-            expense.SetAmount(GetDoubleInput("New Amount: "));
-
-            Console.Write("New Expense Category: ");
-            expense.SetCategory(Console.ReadLine());
+            double amount = GetDoubleInput("New Amount: ");
+            Console.Write("New Category: "); string cat = Console.ReadLine();
+            replacement = new ExpenseItem(name, desc, pri, amount, cat);
         }
-        else if (item is NoteItem note)
+        else if (type == "note")
         {
-            note.SetDate(GetDateInput("New Note Date: "));
+            DateTime date = GetDateInput("New Date: ");
+            replacement = new NoteItem(name, desc, pri, date);
         }
 
-        Console.WriteLine("Item updated.");
-        Pause();
+        project.ReplaceItem(index, replacement);
+        Console.WriteLine("Item updated."); Pause();
     }
 
     static void DeleteItem(Project project)
     {
         Console.Clear();
-        project.DisplayProject();
+        project.Display();
 
-        if (project.GetItems().Count == 0)
+        if (project.GetItemCount() == 0)
         {
-            Console.WriteLine("There are no items to delete.");
-            Pause();
-            return;
+            Console.WriteLine("No items to delete."); Pause(); return;
         }
 
         int index = GetIntInput("Select item number to delete: ") - 1;
 
-        if (index >= 0 && index < project.GetItems().Count)
+        if (index >= 0 && index < project.GetItemCount())
         {
             project.RemoveItem(index);
             Console.WriteLine("Item deleted.");
@@ -438,52 +243,36 @@ class Program
         {
             Console.WriteLine("Invalid item.");
         }
-
         Pause();
     }
 
     static void EditProjectInfo(Project project)
     {
         Console.Clear();
+        Console.Write("New Project Name: ");  string name = Console.ReadLine();
+        Console.Write("New Description: ");   string desc = Console.ReadLine();
+        Console.Write("New Category: ");      string cat  = Console.ReadLine();
+        Console.Write("New Status: ");        string stat = Console.ReadLine();
+        Console.Write("New Priority: ");      string pri  = Console.ReadLine();
+        double budget = GetDoubleInput("New Budget Goal (0 for none): ");
 
-        Console.Write("New Project Name: ");
-        project.SetName(Console.ReadLine());
-
-        Console.Write("New Description: ");
-        project.SetDescription(Console.ReadLine());
-
-        Console.Write("New Category: ");
-        project.SetCategory(Console.ReadLine());
-
-        Console.Write("New Status: ");
-        project.SetStatus(Console.ReadLine());
-
-        Console.Write("New Priority: ");
-        project.SetPriority(Console.ReadLine());
-
-        double budgetGoal = GetDoubleInput("New Budget Goal, enter 0 for no budget: ");
-        project.SetBudgetGoal(budgetGoal);
-
-        Console.WriteLine("Project updated.");
-        Pause();
+        project.Update(name, desc, cat, stat, pri, budget);
+        Console.WriteLine("Project updated."); Pause();
     }
 
     static void FilterByCategory(ProjectManager manager)
     {
         Console.Clear();
-
         Console.Write("Enter category to filter by: ");
         string category = Console.ReadLine();
-
-        manager.DisplayProjectsByCategory(category);
+        manager.DisplayByCategory(category);
         Pause();
     }
 
     static void DeleteProject(ProjectManager manager)
     {
         Console.Clear();
-
-        manager.DisplayAllProjects();
+        manager.DisplayAll();
 
         int index = GetIntInput("Select project number to delete: ") - 1;
 
@@ -496,74 +285,42 @@ class Program
         {
             Console.WriteLine("Invalid project.");
         }
-
         Pause();
     }
+
+    // --- Input helpers ---
 
     static int GetIntInput(string prompt)
     {
         int number;
-        bool validInput = false;
-
         do
         {
             Console.Write(prompt);
-            string input = Console.ReadLine();
-
-            validInput = int.TryParse(input, out number);
-
-            if (!validInput)
-            {
-                Console.WriteLine("Please enter a valid number.");
-            }
-
-        } while (!validInput);
-
-        return number;
+            if (int.TryParse(Console.ReadLine(), out number)) return number;
+            Console.WriteLine("Please enter a valid number.");
+        } while (true);
     }
 
     static double GetDoubleInput(string prompt)
     {
         double number;
-        bool validInput = false;
-
         do
         {
             Console.Write(prompt);
-            string input = Console.ReadLine();
-
-            validInput = double.TryParse(input, out number);
-
-            if (!validInput)
-            {
-                Console.WriteLine("Please enter a valid amount.");
-            }
-
-        } while (!validInput);
-
-        return number;
+            if (double.TryParse(Console.ReadLine(), out number)) return number;
+            Console.WriteLine("Please enter a valid amount.");
+        } while (true);
     }
 
     static DateTime GetDateInput(string prompt)
     {
         DateTime date;
-        bool validInput = false;
-
         do
         {
             Console.Write(prompt);
-            string input = Console.ReadLine();
-
-            validInput = DateTime.TryParse(input, out date);
-
-            if (!validInput)
-            {
-                Console.WriteLine("Please enter a valid date, like 06/15/2026.");
-            }
-
-        } while (!validInput);
-
-        return date;
+            if (DateTime.TryParse(Console.ReadLine(), out date)) return date;
+            Console.WriteLine("Please enter a valid date, e.g. 06/15/2026.");
+        } while (true);
     }
 
     static void Pause()
