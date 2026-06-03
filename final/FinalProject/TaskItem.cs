@@ -2,32 +2,33 @@ using System;
 
 public class TaskItem : ProjectItem
 {
+    // _dueDate: DateTime
     private DateTime _dueDate;
 
+    // TaskItem(name: string, description: string, priority: string, dueDate: DateTime)
     public TaskItem(string name, string description, string priority, DateTime dueDate)
         : base(name, description, priority)
     {
         _dueDate = dueDate;
     }
 
-    public DateTime GetDueDate() { return _dueDate; }
-    public void SetDueDate(DateTime dueDate) { _dueDate = dueDate; }
-
-    public bool IsOverdue()
+    // IsOverdue(): bool
+    private bool IsOverdue()
     {
         return !IsComplete() && _dueDate.Date < DateTime.Today;
     }
 
+    // Display(): void
     public override void Display()
     {
-        string overdueText = IsOverdue() ? " OVERDUE" : "";
-
-        Console.WriteLine($"{GetStatusSymbol()} [Task] {GetName()} | Priority: {GetPriority()} | Due: {_dueDate.ToShortDateString()}{overdueText}");
-        Console.WriteLine($"Description: {GetDescription()}");
+        string overdueText = IsOverdue() ? " !! OVERDUE" : "";
+        Console.WriteLine($"{GetStatusSymbol()} [Task] {Name} | Priority: {Priority} | Due: {_dueDate.ToShortDateString()}{overdueText}");
+        Console.WriteLine($"   Description: {Description}");
     }
 
+    // GetSaveString(): string
     public override string GetSaveString()
     {
-        return $"TASK|{GetName()}|{GetDescription()}|{GetPriority()}|{IsComplete()}|{_dueDate.ToShortDateString()}";
+        return $"TASK|{Name}|{Description}|{Priority}|{IsComplete()}|{_dueDate.ToShortDateString()}";
     }
 }

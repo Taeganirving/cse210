@@ -2,9 +2,12 @@ using System;
 
 public class ExpenseItem : ProjectItem
 {
+    // _amount: double
     private double _amount;
+    // _category: string
     private string _category;
 
+    // ExpenseItem(name: string, description: string, priority: string, amount: double, category: string)
     public ExpenseItem(string name, string description, string priority, double amount, string category)
         : base(name, description, priority)
     {
@@ -12,20 +15,19 @@ public class ExpenseItem : ProjectItem
         _category = category;
     }
 
+    // GetAmount(): double  -- needed by Project to total expenses
     public double GetAmount() { return _amount; }
-    public string GetCategory() { return _category; }
 
-    public void SetAmount(double amount) { _amount = amount; }
-    public void SetCategory(string category) { _category = category; }
-
+    // Display(): void
     public override void Display()
     {
-        Console.WriteLine($"{GetStatusSymbol()} [$] {GetName()} | ${_amount:F2} | Category: {_category} | Priority: {GetPriority()}");
-        Console.WriteLine($"Description: {GetDescription()}");
+        Console.WriteLine($"{GetStatusSymbol()} [$] {Name} | ${_amount:F2} | Category: {_category} | Priority: {Priority}");
+        Console.WriteLine($"   Description: {Description}");
     }
 
+    // GetSaveString(): string
     public override string GetSaveString()
     {
-        return $"EXPENSE|{GetName()}|{GetDescription()}|{GetPriority()}|{IsComplete()}|{_amount}|{_category}";
+        return $"EXPENSE|{Name}|{Description}|{Priority}|{IsComplete()}|{_amount}|{_category}";
     }
 }
